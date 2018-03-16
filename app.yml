@@ -1,0 +1,90 @@
+---
+- hosts: all
+  remote_user: root
+  become: true
+  vars:
+
+  tasks:
+    - name: Install apache on lamp stack
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+        - apache2
+        - mysql-server
+        - mysql-common
+        - mysql-client
+        - libapache2-mod-wsgi
+
+    - name: Start a service
+      service:
+        name: "{{ item }}"
+        state: running
+      with_items:
+        - apache2
+        - mysql
+
+    - name: enable modssl
+      shell: a2enmod ssl
+
+    - name: enable default https sit
+      shell: a2ensite default ssl
+
+    - name: Restart apache2
+      service:
+        name: apache2
+        state: restarted
+
+    ### Database
+    - name: Install python mysql lib
+      apt:
+        name: python-mysqldb
+        state: present
+
+    - name:
+       mysql_users:
+         name: appuser
+         password: 12hello
+         priv: "*.*:ALL"
+         state: present
+
+    - name:
+       mysql_db: app_data
+       state: present
+
+    ### App
+
+    - name: Install pip
+      apt:
+        name: python-pip
+        state: present
+
+    - name: Download app
+      git:
+        repo: https://github.com/whelmed/ansible_demo.git
+        dest: /tmp/webapp
+
+    - name: Install app requirements
+      pip:
+        requirements: /tmp/webapp/app/requirements.txt
+
+    ### site install / configure
+
+    - name: Copy app to apache owner folder
+      shell: "rsync -av /tmp/webapp/app /var/www/webapp"
+
+    - name: Insatall mod-wsgi
+       apt:
+         name: libapache2-mod-wsgi
+         state: present
+
+    - name: Copy apache configuration file
+      copy:
+        src: "apache.conf"
+        dest: /etc/apache2/sites-available/000-default.conf
+
+    - name: Restart apache
+      service:
+        name: apache2
+        state: restarted
