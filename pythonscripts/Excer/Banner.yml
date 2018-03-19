@@ -1,0 +1,34 @@
+--
+- hosts: all (group from the inventory)
+  remote_user: ubuntu
+  become: true ( tells the ansible to sudo root )
+
+  tasks:
+    - name: Apply changed banner accross all enironments
+    # adding modules to accomplish these tasks
+    /Users/koushikpenchikala/infrastructure/roles/sshd/templates/ssh_banner
+
+
+
+
+##    ansible -playbook to run the command
+
+
+
+
+
+---
+- hosts: all
+  remote_user: koushik
+
+  tasks:
+    - name: Update and install packages
+      apt:
+        update_cache: yes
+    - name: Upgrade all packages to the latest version
+      apt:
+        name: "*"
+        state: latest
+    - name: Update all packages to the latest version
+        apt:
+          upgrade: dist
